@@ -2,6 +2,7 @@ import argparse
 import socket
 import random
 import rsa
+import threading
 
 SERVER = []
 KEYPAIR = []
@@ -156,7 +157,15 @@ def welcome_sequence():
             return True
     return False
 
-
+def recieving_message():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('', 1045))
+    sock.listen(1)
+    print "Waiting for response"
+    while True:
+        s_sock, s_address = sock.accept()
+        response = s_sock.recv(1024)
+        print response
 
 def client_repl():
     #returns a boolean value to determine if a connection was established
@@ -222,7 +231,10 @@ def main():
     KEYPAIR.append(pubkey)
     KEYPAIR.append(privkey)
     print "Keys generated"
-    client_repl()
+    threads = []
+    threads.append(threading.Thread(target=client_repl, args=()).start())
+    threads.append(threading.Thread(target=recieving_message, args=()).start())
+    # client_repl()
 
 if __name__ == '__main__':
     main()
