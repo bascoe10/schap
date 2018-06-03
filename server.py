@@ -47,7 +47,7 @@ class ServerHandler(object):
     '''
     close connnection
     '''
-    def __close_conn():
+    def __close_conn(self):
         self.socket.close()
         self.socket = None
 
@@ -157,7 +157,7 @@ class ServerHandler(object):
             sending_user = HOSTNAME_TO_USER[self.address[0]]
             sending_user = "#{0}".format(sending_user)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect(user['address'])
+            sock.connect((user['address'][0], int(user['address'][1])))
             sock.send("{0} SENDMSR {1}\r\n".format(sending_user, args))
             response = sock.recv(1024)
             print response

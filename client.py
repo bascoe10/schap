@@ -160,12 +160,14 @@ def welcome_sequence():
 def recieving_message():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('', 1045))
-    sock.listen(1)
     print "Waiting for response"
     while True:
+        sock.listen(1)
         s_sock, s_address = sock.accept()
         response = s_sock.recv(1024)
         print response
+        s_sock.send('000 Message recieved')
+    print "stopped recieving_message"
 
 def client_repl():
     #returns a boolean value to determine if a connection was established
