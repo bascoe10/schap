@@ -157,6 +157,21 @@ def welcome_sequence():
             return True
     return False
 
+def not_implemented(sock, args):
+    sock.send('001 Not Implemented\r\n')
+
+def ping(sock, args):
+    sock.send('000 Pong\r\n')
+
+def sendmsr(sock, args):
+    if args[0]:
+        sock.send('000 Message recieved')
+    else:
+        sock.send('001 No sender included')
+    print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
+
+
+
 def recieving_message():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('', 1045))
@@ -166,7 +181,18 @@ def recieving_message():
         s_sock, s_address = sock.accept()
         response = s_sock.recv(1024)
         print response
-        s_sock.send('000 Message recieved')
+        sender, command, args = None, None, None
+        if response.startswith('#'):
+            print response.split(" ", 2)
+            sender, command, args = response.split(" ", 2)
+            print command
+        else:
+            command, args = response.split(" ", 1)
+        print command.lower()
+        func = getattr(__import__(__name__), command.lower(), not_implemented)
+        func(s_sock, [sender, args])
+
+        print '> '
     print "stopped recieving_message"
 
 def client_repl():
