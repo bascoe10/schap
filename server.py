@@ -44,7 +44,7 @@ class ServerHandler(object):
         except:
             return
 
-    def __send_message(self, args):
+    def __send_message(self, command, args):
         print args
         user = args.split('#', 1)[0]
         current_users = CURRENT_USERS.keys()
@@ -56,7 +56,7 @@ class ServerHandler(object):
             sending_user = "#{0}".format(sending_user)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((user['address'][0], int(user['address'][1])))
-            sock.send("{0} SENDMSR {1}\r\n".format(sending_user, args))
+            sock.send("{0} {1} {2}\r\n".format(sending_user, command, args))
             response = sock.recv(1024)
             print response
             sock.close()
@@ -167,11 +167,11 @@ class ServerHandler(object):
 
     # TODO: Fill in method
     def _sendmsr(self, args):
-        self.__send_message(args)
+        self.__send_message('SENDMSR', args)
 
     # TODO: Fill in method
     def _encryptmsg(self, args):
-        self.__send_message(args)
+        self.__send_message('ENCRYPTMSG', args)
 
     # TODO: Fill in method
     def _confmsg(self, args):

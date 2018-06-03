@@ -42,7 +42,7 @@ def send_encrypted_message():
 
     message = "Hello" #raw_input("Enter message: ")
     message = message.encode('utf8')
-    crypt = rsa.encrypt(message, key)
+    crypt = str(rsa.encrypt(message, key))
     sock = connect_to_server()
     message = "ENCRYPTMSG {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", crypt)
     print message
@@ -174,7 +174,9 @@ def sendmsr(sock, args):
 def encryptmsg(sock, args):
     if args[0]:
         sock.send('000 Message recieved')
-        decrypted_msg = decrypt(args[1].split(" ", 1)[1], KEYPAIR[1])
+        print KEYPAIR[0]
+        print KEYPAIR[1]
+        decrypted_msg = rsa.decrypt(args[1].split(" ", 1)[1], KEYPAIR[1])
         print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
     else:
         sock.send('001 No sender included')
@@ -189,7 +191,9 @@ def recieving_message():
     while True:
         sock.listen(1)
         s_sock, s_address = sock.accept()
-        response = s_sock.recv(1024)
+        response = ""
+        while not response.endswith('\r\n'):
+            response = response + s_sock.recv(1024)
         print response
         sender, command, args = None, None, None
         if response.startswith('#'):
