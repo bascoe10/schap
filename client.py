@@ -44,7 +44,7 @@ def send_encrypted_message():
     message = message.encode('utf8')
     crypt = rsa.encrypt(message, key)
     sock = connect_to_server()
-    message = "SENDMSR {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", crypt)
+    message = "ENCRYPTMSG {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", crypt)
     print message
     sock.send(message)
     response = sock.recv(1024)
@@ -166,9 +166,19 @@ def ping(sock, args):
 def sendmsr(sock, args):
     if args[0]:
         sock.send('000 Message recieved')
+        print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
     else:
         sock.send('001 No sender included')
-    print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
+
+
+def encryptmsg(sock, args):
+    if args[0]:
+        sock.send('000 Message recieved')
+        decrypted_msg = decrypt(args[1].split(" ", 1)[1], KEYPAIR[1])
+        print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
+    else:
+        sock.send('001 No sender included')
+
 
 
 

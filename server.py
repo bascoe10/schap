@@ -44,6 +44,26 @@ class ServerHandler(object):
         except:
             return
 
+    def __send_message(self, args):
+        print args
+        user = args.split('#', 1)[0]
+        current_users = CURRENT_USERS.keys()
+        if user in current_users:
+            self.__send_response("000 Message received")
+            self.__close_conn()
+            user = CURRENT_USERS.get(user)
+            sending_user = HOSTNAME_TO_USER[self.address[0]]
+            sending_user = "#{0}".format(sending_user)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((user['address'][0], int(user['address'][1])))
+            sock.send("{0} SENDMSR {1}\r\n".format(sending_user, args))
+            response = sock.recv(1024)
+            print response
+            sock.close()
+        else:
+            self.__send_response("001 User not found")
+            self.__close_conn()
+
     '''
     close connnection
     '''
@@ -147,36 +167,11 @@ class ServerHandler(object):
 
     # TODO: Fill in method
     def _sendmsr(self, args):
-        print args
-        user = args.split('#', 1)[0]
-        current_users = CURRENT_USERS.keys()
-        if user in current_users:
-            self.__send_response("000 Message received")
-            self.__close_conn()
-            user = CURRENT_USERS.get(user)
-            sending_user = HOSTNAME_TO_USER[self.address[0]]
-            sending_user = "#{0}".format(sending_user)
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((user['address'][0], int(user['address'][1])))
-            sock.send("{0} SENDMSR {1}\r\n".format(sending_user, args))
-            response = sock.recv(1024)
-            print response
-            sock.close()
-        else:
-            self.__send_response("001 User not found")
-            self.__close_conn()
+        self.__send_message(args)
 
     # TODO: Fill in method
     def _encryptmsg(self, args):
-        print args
-        user = args.split('#', 1)[0]
-        current_users = CURRENT_USERS.keys()
-        if user in current_users:
-            self.__send_response("000 Message received")
-        else:
-            self.__send_response("001 User not found")
-        self.socket.close()
-        self.socket = None
+        self.__send_message(args)
 
     # TODO: Fill in method
     def _confmsg(self, args):
