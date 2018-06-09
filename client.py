@@ -54,7 +54,6 @@ def admin_mode():
 
 #handles sending encryption ket to server
 def push_key():
-    print 'Here'
     sock = connect_to_server()
     message = "KEY {0}\r\n".format(KEYPAIR[0].save_pkcs1())
     sock.send(message)
@@ -107,7 +106,7 @@ def send_message():
             'message_2_ack': []
         }
 
-    raw_input("Enter message: ")
+    message = raw_input("Enter message: ")
     message = "SENDMSR {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", message)
     # print message
     sock = connect_to_server()
