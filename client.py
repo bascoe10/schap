@@ -400,6 +400,7 @@ def client_repl():
 def check_connectivity(address, port):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
         sock.connect((address, port))
         return True
     except Exception as e:
