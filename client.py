@@ -287,8 +287,9 @@ def sendmsr(sock, args):
         print "From {0}: {1}".format(sender, body)
         _sock = connect_to_server()
         message = "CONFMSG {0} {1}\r\n".format(sender, header.split('#')[1])
-        print message
         _sock.send(message)
+        code, message = read_message(_sock)
+        print message
     else:
         sock.send('001 No sender included')
 
