@@ -440,7 +440,8 @@ def discover_server(port):
             if check_connectivity(address, port):
                 found = True
                 break
-        return ''
+        if found:
+            return address
 
 
 # using argparse module process the command line arguments
