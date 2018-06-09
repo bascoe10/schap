@@ -457,7 +457,7 @@ def get_cli_args():
     # check the validity of the hostname passed in the process convert the host name to ip addr
     host = discover_server(args.server)
     try:
-        host = socket.gethostbyname(args.host)
+        host = socket.gethostbyname(host)
     except:
         return None
     return {'host': host, 'server': args.server, 'client': args.client}
