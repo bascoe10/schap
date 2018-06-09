@@ -271,6 +271,7 @@ def welcome_sequence():
 
 #handle command messages from the server that are not Implemented in the client
 def not_implemented(sock, args):
+    print 'Not Implemented'
     sock.send('001 Not Implemented\r\n')
 
 #handle PING command messages from the server
@@ -281,7 +282,13 @@ def ping(sock, args):
 def sendmsr(sock, args):
     if args[0]:
         sock.send('000 Message recieved')
-        print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
+        # sender = args[0]
+        header, body = args[1].split(" ", 1)
+        print "From {0}: {1}".format(args[0], body)
+        _sock = connect_to_server()
+        message = "CONFMSG {0}\r\n".format(header.split('#')[1])
+        print message
+        _sock.send(message)
     else:
         sock.send('001 No sender included')
 
