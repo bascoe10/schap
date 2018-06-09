@@ -278,6 +278,16 @@ def not_implemented(sock, args):
 def ping(sock, args):
     sock.send('000 Pong\r\n')
 
+#handle CONFMSG command messages from the server
+def confmsg(sock, args):
+    if args[0]:
+        sock.send('000 Message recieved')
+        sender = args[0]
+        # header, body = args[1].split(" ", 1)
+        print "{0} confirmed message: {1}".format(sender, args)
+    else:
+        sock.send('001 No sender included')
+
 #handle SENDMSR command messages from the server
 def sendmsr(sock, args):
     if args[0]:
@@ -286,7 +296,7 @@ def sendmsr(sock, args):
         header, body = args[1].split(" ", 1)
         print "From {0}: {1}".format(sender, body)
         _sock = connect_to_server()
-        message = "CONFMSG {0} {1}\r\n".format(sender, header.split('#')[1])
+        message = "CONFMSG {0} {1}\r\n".format(sender.lstrip('#'), header.split('#')[1])
         _sock.send(message)
         code, message = read_message(_sock)
         print message

@@ -245,7 +245,7 @@ class ServerHandler(object):
             sending_user = "#" + sending_user
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((user['address'][0], int(user['address'][1])))
-            sock.send("{0} {1} {2}\r\n".format(sending_user, command, args))
+            sock.send("{0} CONFMSG {1}\r\n".format(sending_user, args))
             response = sock.recv(1024)
             print response
             sock.close()
