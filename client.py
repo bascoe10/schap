@@ -415,13 +415,32 @@ def discover_server(port):
         address_space = socket.gethostbyname(socket.gethostname())
         address_space = address_space.split('.')
         address = None
+        found = False
         for i in range(0, 256):
 
             address = '.'.join(address_space[:3])+'.'+str(i)
             print address
             if check_connectivity(address, port):
+                found = True
                 break
-        return address
+        if found:
+            return address
+
+        #Most Linux distros return the L0 address- walkaround
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('8.8.8.8', 1))
+        address_space = sock.getsockname()[0]
+        address_space = address_space.split('.')
+        address = None
+        found = False
+        for i in range(0, 256):
+            address = '.'.join(address_space[:3])+'.'+str(i)
+            print address
+            if check_connectivity(address, port):
+                found = True
+                break
+        return ''
+
 
 # using argparse module process the command line arguments
 def get_cli_args():
