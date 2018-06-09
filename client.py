@@ -106,16 +106,16 @@ def send_message():
             'message_id': random.randint(1,65536),
             'message_2_ack': []
         }
-        MESSAGE_SESSIONS[user] = user_session
 
-    message = "Hello" #raw_input("Enter message: ")
-    sock = connect_to_server()
+    raw_input("Enter message: ")
     message = "SENDMSR {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", message)
-    print message
+    # print message
+    sock = connect_to_server()
     sock.send(message)
     response = sock.recv(1024)
     print response
     user_session['message_id'] = user_session['message_id'] + 1
+    user_session['message_2_ack'].append(user_session['message_id'])
     MESSAGE_SESSIONS[user] = user_session
 
 #handles loggin out
@@ -282,7 +282,6 @@ def ping(sock, args):
 def sendmsr(sock, args):
     if args[0]:
         sock.send('000 Message recieved')
-        print args
         print "From {0}: {1}".format(args[0], args[1].split(" ", 1)[1])
     else:
         sock.send('001 No sender included')
@@ -411,9 +410,10 @@ def check_connectivity(address, port):
 def address_space_loop(address_space, port):
     address = None
     found = False
-    for i in range(0, 256):
+    for i in range(0, 256): #loop from 0 to 255
         address = '.'.join(address_space)+'.'+str(i)
         if check_connectivity(address, port):
+            print 'Server found.'
             found = True
             break
     if found:
@@ -425,6 +425,7 @@ def check_local_interface(port):
 
 #method for discovering server on the network
 def discover_server(port):
+    print 'Finding server...'
     #check if server is running on the same computer as the client
     if check_local_interface(port):
         return ''
@@ -444,6 +445,7 @@ def discover_server(port):
         address = address_space_loop(address_space[:3], port)
         if address:
             return address
+    print 'Server not found'
 
 
 # using argparse module process the command line arguments
@@ -455,24 +457,32 @@ def get_cli_args():
 
 
     args = parser.parse_args()
-    print args
+    # print args
+    host = args.host
+    if args.host == '': # only do server discovery if the hostname is not passed
+        host = discover_server(args.server)
+
+
     # check the validity of the hostname passed in the process convert the host name to ip addr
-    host = discover_server(args.server)
     try:
         host = socket.gethostbyname(host)
     except:
-        return None
+        print 'Hostname cannot be resolved'
+        exit(1)
     return {'host': host, 'server': args.server, 'client': args.client}
 
 
 def main():
     args = get_cli_args()
+    #SERVER object holds need arguments about the server and the port number of the client
     SERVER.append((args['host'], args['server']))
     SERVER.append(args['client'])
+    #new rsa key is generated when the application is started and is added to the KEYPAIR obj
     (pubkey, privkey) = rsa.newkeys(512)
     KEYPAIR.append(pubkey)
     KEYPAIR.append(privkey)
-    threading.Thread(target=client_repl).start()
+    client_repl()
+    # threading.Thread(target=client_repl).start()
 
 if __name__ == '__main__':
     main()
