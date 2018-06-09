@@ -397,6 +397,7 @@ def client_repl():
 
     return
 
+# helper method for checking connectivity to default or passed port
 def check_connectivity(address, port):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -406,25 +407,33 @@ def check_connectivity(address, port):
     except Exception as e:
         return False
 
+#loop through an address space
+def address_space_loop(address_space, port):
+    address = None
+    found = False
+    for i in range(0, 256):
+        address = '.'.join(address_space)+'.'+str(i)
+        if check_connectivity(address, port):
+            found = True
+            break
+    if found:
+        return address
+
+
 def check_local_interface(port):
     return check_connectivity('', port)
 
+#method for discovering server on the network
 def discover_server(port):
+    #check if server is running on the same computer as the client
     if check_local_interface(port):
         return ''
     else:
+        # return proper IP address for mac but returns loopback address for Linux
         address_space = socket.gethostbyname(socket.gethostname())
         address_space = address_space.split('.')
-        address = None
-        found = False
-        for i in range(0, 256):
-
-            address = '.'.join(address_space[:3])+'.'+str(i)
-            print address
-            if check_connectivity(address, port):
-                found = True
-                break
-        if found:
+        address = address_space_loop(address_space[:3], port)
+        if address:
             return address
 
         #Most Linux distros return the L0 address- walkaround
@@ -432,15 +441,8 @@ def discover_server(port):
         sock.connect(('8.8.8.8', 1))
         address_space = sock.getsockname()[0]
         address_space = address_space.split('.')
-        address = None
-        found = False
-        for i in range(0, 256):
-            address = '.'.join(address_space[:3])+'.'+str(i)
-            print address
-            if check_connectivity(address, port):
-                found = True
-                break
-        if found:
+        address = address_space_loop(address_space[:3], port)
+        if address:
             return address
 
 
