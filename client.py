@@ -282,11 +282,11 @@ def ping(sock, args):
 def sendmsr(sock, args):
     if args[0]:
         sock.send('000 Message recieved')
-        # sender = args[0]
+        sender = args[0]
         header, body = args[1].split(" ", 1)
-        print "From {0}: {1}".format(args[0], body)
+        print "From {0}: {1}".format(sender, body)
         _sock = connect_to_server()
-        message = "CONFMSG {0}\r\n".format(header.split('#')[1])
+        message = "CONFMSG {0} {1}\r\n".format(sender, header.split('#')[1])
         print message
         _sock.send(message)
     else:
