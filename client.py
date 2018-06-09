@@ -397,6 +397,32 @@ def client_repl():
 
     return
 
+def check_connectivity(address, port):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((address, port))
+        return True
+    except Exception as e:
+        return False
+
+def check_local_interface(port):
+    return check_connectivity('', port)
+
+def discover_server(port):
+    if check_local_interface(port):
+        return ''
+    else:
+        address_space = socket.gethostbyname(socket.gethostname())
+        address_space = address_space.split('.')
+        address = None
+        for i in range(0, 256):
+
+            address = '.'.join(address_space[:3])+'.'+str(i)
+            print address
+            if check_connectivity(address, port):
+                break
+        return address
+
 # using argparse module process the command line arguments
 def get_cli_args():
     parser = argparse.ArgumentParser(description='SChaP Client')
@@ -408,12 +434,11 @@ def get_cli_args():
     args = parser.parse_args()
     print args
     # check the validity of the hostname passed in the process convert the host name to ip addr
-    host = None
+    host = discover_server(args.server)
     try:
         host = socket.gethostbyname(args.host)
     except:
         return None
-
     return {'host': host, 'server': args.server, 'client': args.client}
 
 
