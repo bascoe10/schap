@@ -45,6 +45,15 @@ def add_admin():
     resp_code, resp_message = read_message(sock)
     print resp_message
 
+#handles moving from the ADMIN state to CONN EST state
+def admin_exit():
+    sock = connect_to_server()
+    message = "EXIT\r\n"
+    sock.send(message)
+    resp_code, resp_message = read_message(sock)
+    print resp_message
+
+#handles moving to the ADMIN state
 def admin_mode():
     sock = connect_to_server()
     message = "ADMIN\r\n"
@@ -67,15 +76,17 @@ def send_encrypted_message():
     sock = connect_to_server()
     message = "LKUP {0}\r\n".format(user)
     sock.send(message)
-    response = sock.recv(1024)
-    print response
-    code, message =  response.split(" ", 1)
-    print code
+    code, message = read_message(sock)
+    print message
     if code != '000':
         print "Cannot retrieve key"
         return
+    pem_file = message.split('#', 1)[1]
+    if len(pem_file) == 0:
+        print 'No key found for user please send unencrypted message'
+        return
 
-    key = rsa.PublicKey.load_pkcs1(message.split('#', 1)[1])
+    key = rsa.PublicKey.load_pkcs1(pem_file)
 
     user_session = MESSAGE_SESSIONS.get(user) #check is user is in active list
     if not user_session: # if they are not then add them
@@ -85,12 +96,11 @@ def send_encrypted_message():
         }
         MESSAGE_SESSIONS[user] = user_session
 
-    message = "Hello" #raw_input("Enter message: ")
+    message = raw_input("Enter message: ")
     message = message.encode('utf8')
     crypt = str(rsa.encrypt(message, key))
     sock = connect_to_server()
     message = "ENCRYPTMSG {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", crypt)
-    print message
     sock.send(message)
     response = sock.recv(1024)
     print response
@@ -196,9 +206,10 @@ def menu():
     print('[10] Broadcast message [ADMIN]')
     print('[11] Terminate a user session [ADMIN]')
     print('[12] Delete user [ADMIN]')
-    print("[13] Help")
-    print("[14] Log Out")
-    print("[15] Quit")
+    print("[13] Exit Admin Mode")
+    print("[14] Help")
+    print("[15] Log Out")
+    print("[16] Quit")
 
 #helper method for reading message from socket
 #read from the socket until the delimeter
@@ -284,7 +295,7 @@ def confmsg(sock, args):
         sock.send('000 Message recieved')
         sender = args[0]
         # header, body = args[1].split(" ", 1)
-        print "{0} confirmed message: {1}".format(sender, args)
+        print "{0} confirmed message: {1}".format(sender, args[1].split(' ')[1])
     else:
         sock.send('001 No sender included')
 
@@ -348,6 +359,7 @@ def recieving_message():
         #if command is a QUIT respond and then break from listening loop
         if command == 'QUIT':
             s_sock.send('000 Closing connection\r\n')
+            sock.close()
             break
 
         #get function corresponding to the command passed or default function
@@ -371,45 +383,50 @@ def client_repl():
     while connection_active:
         # get user option for the menu
         user_input = raw_input('> ')
-        user_input = int(user_input)
-        if user_input == 1:
-            list_users()
-        elif user_input == 2:
-            lookup_user()
-        elif user_input == 3:
-            ping_server()
-        elif user_input == 4:
-            check_server_version()
-        elif user_input == 5:
-            send_message()
-        elif user_input == 6:
-            send_encrypted_message()
-        elif user_input == 7:
-            push_key()
-        elif user_input == 8:
-            admin_mode()
-        elif user_input == 9:
-            add_admin()
-        elif user_input == 10:
-            broadcast_message()
-        elif user_input == 11:
-            terminate_a_session()
-        elif user_input == 12:
-            delete_user()
-        elif user_input == 13:
-            menu()
-        elif user_input == 14:
-            logout()
-            print 'Session Closed'.center(40, '*')
-            # steps here to close or login
-            client_repl()
-        elif user_input == 15:
-            print 'Good bye!'.center(40, '*')
-            if connection_active:
+        try:
+            user_input = int(user_input)
+            if user_input == 1:
+                list_users()
+            elif user_input == 2:
+                lookup_user()
+            elif user_input == 3:
+                ping_server()
+            elif user_input == 4:
+                check_server_version()
+            elif user_input == 5:
+                send_message()
+            elif user_input == 6:
+                send_encrypted_message()
+            elif user_input == 7:
+                push_key()
+            elif user_input == 8:
+                admin_mode()
+            elif user_input == 9:
+                add_admin()
+            elif user_input == 10:
+                broadcast_message()
+            elif user_input == 11:
+                terminate_a_session()
+            elif user_input == 12:
+                delete_user()
+            elif user_input == 13:
+                admin_exit()
+            elif user_input == 14:
+                menu()
+            elif user_input == 15:
                 logout()
-            connection_active = False
-        else:
-            print 'Please select a valid option. Press [13] for help'
+                print 'Session Closed'.center(40, '*')
+                # steps here to close or login
+                client_repl()
+            elif user_input == 16:
+                print 'Good bye!'.center(40, '*')
+                if connection_active:
+                    logout()
+                connection_active = False
+            else:
+                print 'Please select a valid option. Press [13] for help'
+        except ValueError:
+            print 'Value has to be an integer'
 
     return
 
