@@ -334,8 +334,14 @@ def broadcast(sock, args):
 
 # runs within the thread the receives command message from the server
 def recieving_message():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('', SERVER[1]))
+    print 'recieving...'
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('', SERVER[1]))
+    except:
+        print 'Error establishing listening port please restart'
+        return
+
     while True:
         sock.listen(1) #listens on the predefined port 9876 for server connection
         s_sock, s_address = sock.accept()
@@ -358,6 +364,7 @@ def recieving_message():
 
         #if command is a QUIT respond and then break from listening loop
         if command == 'QUIT':
+            print 'closing'
             s_sock.send('000 Closing connection\r\n')
             sock.close()
             break

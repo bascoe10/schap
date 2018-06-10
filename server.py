@@ -6,11 +6,34 @@ import threading
 from time import sleep
 
 VERSION = '1.0'
-DB = shelve.open('users')
 CURRENT_USERS = {}
 HOSTNAME_TO_USER = {}
 ADMINS = []
 # NEXT_TO_RECIEVE = []
+
+
+def add_user_to_db(username, obj):
+    db = shelve.open('users', flag='c')
+    db[username] = obj
+    db.close()
+
+
+def remove_user_from_db(username):
+    db = shelve.open('users', flag='c')
+    del db[username]
+    db.close()
+
+def get_user(username):
+    db = shelve.open('users', flag='c')
+    user = db[username]
+    db.close()
+    return user
+
+def get_db_users():
+    db = shelve.open('users', flag='c')
+    users = db.keys()
+    db.close()
+    return users
 
 #class that abstract handling request
 class ServerHandler(object):
@@ -112,7 +135,7 @@ class ServerHandler(object):
         if args in CURRENT_USERS.keys(): # check if user has already been authenticated
             self.__send_response("100 User already authenticated")
             return
-        if args in DB.keys(): # if use exist in our database
+        if args in get_db_users(): # if use exist in our database
             self.__send_response("000 User found please send password")
             self.user_registration = False
         else: #user does not exist in our database
@@ -139,13 +162,12 @@ class ServerHandler(object):
         password_hash = sha_digest.encode('hex')
         # if user is not registered add them to the DB
         if self.user_registration:
-            print 'Here'
-            DB[self.username] = { 'password': password_hash, 'admin': False }
+            add_user_to_db(self.username, { 'password': password_hash, 'admin': False })
             HOSTNAME_TO_USER[self.address[0]] = self.username
-            DB.sync()
+            # DB.sync()
             self.__send_response("000 User authenticated")
         else: # if user is already registered authenticate
-            if DB[self.username]['password'] == password_hash:
+            if get_user(self.username)['password'] == password_hash:
                 HOSTNAME_TO_USER[self.address[0]] = self.username
                 self.__send_response("000 User authenticated")
             else:
@@ -206,12 +228,10 @@ class ServerHandler(object):
             self.__close_conn()
             return
         current_users = CURRENT_USERS.keys()
-        print "Here"
         if args in current_users:
             self.__send_response("000 {0}#{1}".format(args, CURRENT_USERS[args]['key']))
         else:
             self.__send_response("001 User not found")
-        print 'Here'
         self.__close_conn()
 
     '''
@@ -305,7 +325,8 @@ class ServerHandler(object):
     '''
     def _admin(self, args):
         username = HOSTNAME_TO_USER[self.address[0]]
-        user = DB.get(username)
+        # user = DB.get(username)
+        user = get_user(username)
         if user.get('admin'):
             ADMINS.append(username)
             self.__send_response("000 Admin mode activated")
@@ -325,7 +346,7 @@ class ServerHandler(object):
             self.__close_conn()
             return
         # name is passed but not in database
-        if not args in DB.keys():
+        if not args in get_db_users():
             self.__send_response("001 User not found")
             self.__close_conn()
             return
@@ -333,11 +354,14 @@ class ServerHandler(object):
         sender = HOSTNAME_TO_USER[self.address[0]]
         # check if user is an admin
         if sender in ADMINS:
-            if args in DB.keys():
+            if args in get_db_users():
                 if args in ADMINS:
                     self.__send_response("001 User is already an admin")
                 else:
                     ADMINS.append(args)
+                    user_obj = get_user(args)
+                    user_obj['admin'] = True
+                    add_user_to_db(args, user_obj)
                     self.__send_response("000 User granted admin access")
             else:
                 self.__send_response("001 User not found")
@@ -395,7 +419,7 @@ class ServerHandler(object):
             self.__close_conn()
             return
         # name is passed but not in database
-        if not args in DB.keys():
+        if not args in get_db_users():
             self.__send_response("001 User not found")
             self.__close_conn()
             return
@@ -415,8 +439,9 @@ class ServerHandler(object):
             self.__close_conn()
             return
         # remove user from the database of users
-        del DB[args]
-        DB.sync()
+        # del DB[args]
+        # DB.sync()
+        remove_user_from_db(args)
         #if user is logged in we want to remove them from list of active users
         if args in CURRENT_USERS.keys():
             user = CURRENT_USERS.pop(args)
@@ -437,13 +462,11 @@ class ServerHandler(object):
     '''
     def _version(self, args):
         if self.__logged_in():
-            print 'Here'
             self.__send_response("001 "+VERSION)
             self.__close_conn()
         else: # if user is not logged in set next to recieve as USER
             self.next_to_recieve.append('USER')
             self.__send_response("000 "+VERSION)
-        print self.next_to_recieve
         return
 
     '''
@@ -451,7 +474,10 @@ class ServerHandler(object):
     '''
     def _quit(self, args):
         # remove user from list of connected users
-        username = HOSTNAME_TO_USER.pop(self.address[0])
+        try:
+            username = HOSTNAME_TO_USER.pop(self.address[0])
+        except KeyError:
+            return
         user = CURRENT_USERS.pop(username)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((user['address'][0], int(user['address'][1])))
@@ -489,14 +515,6 @@ class ServerHandler(object):
             while not message.endswith('\r\n'):
                 message += self.socket.recv(1024)
             command, arguments = self.__parse_message(message)
-            #check if command is valid to be recieved
-            # print command
-            # if len(self.next_to_recieve) != 0 and not(command in self.next_to_recieve):
-            #     print "Next to recieve {0}".format(",".join(self.next_to_recieve))
-            #     print "Recieved {0}".format(command)
-            #     self.socket.send('001 In wrong state\r\n')
-            #     self.socket.close()
-            #     break
             '''
             user is not required to be logged in to send
             VERSION, USER or PASS commands
@@ -507,8 +525,9 @@ class ServerHandler(object):
                 func = getattr(self, '_'+command, self.__not_implemented)
                 func(arguments)
             else:
-                self.socket.send('001 In wrong state\r\n')
-                self.socket.__close_conn()
+                if self.socket:
+                    self.socket.send('001 In wrong state\r\n')
+                    self.socket.__close_conn()
                 break
 
 #prune active members if they are no longer running
