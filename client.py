@@ -102,8 +102,8 @@ def send_encrypted_message():
     sock = connect_to_server()
     message = "ENCRYPTMSG {0}#{1}#{2} {3}\r\n".format(user, user_session['message_id'], "", crypt)
     sock.send(message)
-    response = sock.recv(1024)
-    print response
+    code, message = read_message(sock)
+    print message
     user_session['message_id'] = user_session['message_id'] + 1
     MESSAGE_SESSIONS[user] = user_session
 
@@ -121,8 +121,8 @@ def send_message():
     # print message
     sock = connect_to_server()
     sock.send(message)
-    response = sock.recv(1024)
-    print response
+    code, message = read_message(sock)
+    print message
     user_session['message_id'] = user_session['message_id'] + 1
     user_session['message_2_ack'].append(user_session['message_id'])
     MESSAGE_SESSIONS[user] = user_session

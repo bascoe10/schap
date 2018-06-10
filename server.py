@@ -307,7 +307,11 @@ class ServerHandler(object):
 
         self.__send_response("000 Message received")
         self.__close_conn()
-        for i in HOSTNAME_TO_USER:
+        user = HOSTNAME_TO_USER.keys()
+        sending_user = HOSTNAME_TO_USER[self.address[0]]
+        index = user.index(sending_user)
+        sending_user.pop(index)
+        for i in sending_user:
             user_name = HOSTNAME_TO_USER[i]
             user = CURRENT_USERS.get(user_name)
             sending_user = HOSTNAME_TO_USER[self.address[0]]
@@ -405,7 +409,7 @@ class ServerHandler(object):
         user = CURRENT_USERS.pop(args)
         HOSTNAME_TO_USER.pop(user['address'][0])
         self.__send_response("000 User session terminated")
-        self.socket.__close_conn()
+        self.__close_conn()
         return
 
     '''
@@ -527,7 +531,7 @@ class ServerHandler(object):
             else:
                 if self.socket:
                     self.socket.send('001 In wrong state\r\n')
-                    self.socket.__close_conn()
+                    self.__close_conn()
                 break
 
 #prune active members if they are no longer running
