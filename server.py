@@ -68,6 +68,7 @@ class ServerHandler(object):
             if len(self.next_to_recieve) == 0 or command in self.next_to_recieve:
                 return True
             else:
+                print self.next_to_recieve
                 self.__send_response("100 Command not allowed")
                 self.__close_conn()
                 return False
@@ -164,6 +165,7 @@ class ServerHandler(object):
         if self.user_registration:
             add_user_to_db(self.username, { 'password': password_hash, 'admin': False })
             HOSTNAME_TO_USER[self.address[0]] = self.username
+            print HOSTNAME_TO_USER
             # DB.sync()
             self.__send_response("000 User authenticated")
         else: # if user is already registered authenticate
