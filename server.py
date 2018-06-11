@@ -305,13 +305,21 @@ class ServerHandler(object):
             self.__close_conn()
             return
 
+        #get originator of message
+        sending_user = HOSTNAME_TO_USER[self.address[0]]
+
+        #check if user is in admin state
+        if not sending_user in ADMINS:
+            self.__send_response("001 Unauthorized request")
+            self.__close_conn()
+            return
+
         self.__send_response("000 Message received")
         self.__close_conn()
-        user = HOSTNAME_TO_USER.keys()
-        sending_user = HOSTNAME_TO_USER[self.address[0]]
-        index = user.index(sending_user)
-        sending_user.pop(index)
-        for i in sending_user:
+        users = HOSTNAME_TO_USER.keys()
+        index = users.index(self.address[0])
+        users.pop(index)
+        for i in users:
             user_name = HOSTNAME_TO_USER[i]
             user = CURRENT_USERS.get(user_name)
             sending_user = HOSTNAME_TO_USER[self.address[0]]
@@ -385,17 +393,17 @@ class ServerHandler(object):
             self.__close_conn()
             return
 
-        #check if user is logged in
-        if not args in CURRENT_USERS.keys():
-            self.__send_response("001 User not logged in")
-            self.__close_conn()
-            return
-
         sending_user = HOSTNAME_TO_USER[self.address[0]]
 
         #check if current user is in ADMIN state
         if not sending_user in ADMINS:
             self.__send_response("001 Unauthorized request")
+            self.__close_conn()
+            return
+
+        #check if user is logged in
+        if not args in CURRENT_USERS.keys():
+            self.__send_response("001 User not logged in")
             self.__close_conn()
             return
 
@@ -422,11 +430,6 @@ class ServerHandler(object):
             self.__send_response("100 User not passed")
             self.__close_conn()
             return
-        # name is passed but not in database
-        if not args in get_db_users():
-            self.__send_response("001 User not found")
-            self.__close_conn()
-            return
 
         #get originator of message
         sending_user = HOSTNAME_TO_USER[self.address[0]]
@@ -434,6 +437,12 @@ class ServerHandler(object):
         #check if user is in admin state
         if not sending_user in ADMINS:
             self.__send_response("001 Unauthorized request")
+            self.__close_conn()
+            return
+
+        # name is passed but not in database
+        if not args in get_db_users():
+            self.__send_response("001 User not found")
             self.__close_conn()
             return
 

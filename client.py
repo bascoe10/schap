@@ -77,7 +77,6 @@ def send_encrypted_message():
     message = "LKUP {0}\r\n".format(user)
     sock.send(message)
     code, message = read_message(sock)
-    print message
     if code != '000':
         print "Cannot retrieve key"
         return
@@ -334,7 +333,6 @@ def broadcast(sock, args):
 
 # runs within the thread the receives command message from the server
 def recieving_message():
-    print 'recieving...'
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('', SERVER[1]))
