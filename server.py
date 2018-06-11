@@ -68,7 +68,6 @@ class ServerHandler(object):
             if len(self.next_to_recieve) == 0 or command in self.next_to_recieve:
                 return True
             else:
-                print self.next_to_recieve
                 self.__send_response("100 Command not allowed")
                 self.__close_conn()
                 return False
@@ -79,6 +78,8 @@ class ServerHandler(object):
             return True
         else:
         #all other commands
+            print HOSTNAME_TO_USER.keys()
+            print self.next_to_recieve
             self.__send_response("100 Command not allowed")
             self.__close_conn()
             return False
