@@ -9,6 +9,15 @@ SERVER = []
 KEYPAIR = []
 MESSAGE_SESSIONS = {} #holds a list of users that are currently chatting with
 
+# allows user to enter the command to send
+def raw_command():
+    sock = connect_to_server()
+    message = raw_input("Enter command with args> ")
+    message = "{0}\r\n".format(message)
+    sock.send(message)
+    resp_code, resp_message = read_message(sock)
+    print resp_code + ' ' + resp_message
+
 #handles removing a user from the server
 def delete_user():
     sock = connect_to_server()
@@ -207,7 +216,7 @@ def menu():
     print('[12] Delete user [ADMIN]')
     print("[13] Exit Admin Mode")
     print("[14] Help")
-    print("[15] Log Out")
+    print("[15] Command mode")
     print("[16] Quit")
 
 #helper method for reading message from socket
@@ -419,10 +428,7 @@ def client_repl():
             elif user_input == 14:
                 menu()
             elif user_input == 15:
-                logout()
-                print 'Session Closed'.center(40, '*')
-                # steps here to close or login
-                client_repl()
+                raw_command()
             elif user_input == 16:
                 print 'Good bye!'.center(40, '*')
                 if connection_active:

@@ -165,7 +165,6 @@ class ServerHandler(object):
         if self.user_registration:
             add_user_to_db(self.username, { 'password': password_hash, 'admin': False })
             HOSTNAME_TO_USER[self.address[0]] = self.username
-            print HOSTNAME_TO_USER
             # DB.sync()
             self.__send_response("000 User authenticated")
         else: # if user is already registered authenticate
